@@ -5,16 +5,18 @@ import { ImageCard } from "@/components/image-card";
 
 interface ResultsGridProps {
   hits: ImageHit[];
-  isFavorite: (hit: ImageHit) => boolean;
+  isInBasket: (hit: ImageHit) => boolean;
   onPick: (hit: ImageHit) => void;
-  onToggleFavorite: (hit: ImageHit) => void;
+  onAddToBasket: (hit: ImageHit) => void;
+  onRemoveFromBasket?: (hit: ImageHit) => void;
 }
 
 export function ResultsGrid({
   hits,
-  isFavorite,
+  isInBasket,
   onPick,
-  onToggleFavorite,
+  onAddToBasket,
+  onRemoveFromBasket,
 }: ResultsGridProps) {
   const seen = new Set<string>();
   const uniqueHits = hits.filter((hit) => {
@@ -30,9 +32,10 @@ export function ResultsGrid({
         <ImageCard
           key={`${hit.provider}-${hit.id}-${i}`}
           hit={hit}
-          isFavorite={isFavorite(hit)}
+          isInBasket={isInBasket(hit)}
           onPick={onPick}
-          onToggleFavorite={onToggleFavorite}
+          onAddToBasket={onAddToBasket}
+          onRemoveFromBasket={onRemoveFromBasket}
         />
       ))}
     </div>

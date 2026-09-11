@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Canvas — Wallpaper Hub
 
-ChatGPT-style, **database-less** wallpaper download site. Stack: Next.js 16 (App Router) + TypeScript + Tailwind v4. Providers: **Pexels** (default) + **Pixabay**.
+ChatGPT-style, **database-less** wallpaper download site. Stack: Next.js 16 (App Router) + TypeScript + Tailwind v4. Providers: **Pexels** (default) + **Pixabay**. UI is a **light/white theme** (no dark mode).
 
 ## Commands
 - `npm run dev` — dev server
@@ -21,14 +21,15 @@ ChatGPT-style, **database-less** wallpaper download site. Stack: Next.js 16 (App
 ## Environment (never commit; see `.env.local.example`)
 - `PEXELS_API_KEY` — https://www.pexels.com/api/ (200 req/hr, 20k/mo)
 - `PIXABAY_API_KEY` — https://pixabay.com/api/docs/ (100 req / 60s)
+- `UNSPLASH_API_KEY` — **DISABLED**: Unsplash ToS does not permit wallpaper apps. Adapter is kept (commented integration) in `lib/providers/unsplash.ts`; see its header note to re-enable.
 
 ## Architecture
 - Keys are **server-only**. All provider calls happen in Route Handlers under `app/api/`; never `NEXT_PUBLIC_`.
-- `lib/providers/` — `types.ts` (unified `ImageHit`), one adapter per provider, `index.ts` orchestrates `searchImages()`.
-- **Caching is the database**: every upstream `fetch` uses `next: { revalidate: 86400 }` (Pexels & Pixabay both mandate 24h caching). No DB, no storage.
-- Downloads: `app/api/download/route.ts` proxies CDN bytes (host allowlist) so the browser gets a true `Content-Disposition` attachment download.
-- Favorites + search history: `localStorage` only (keys `canvas:favorites`, `canvas:history`).
-- Attribution required by both providers — always rendered in the Lightbox.
+- `lib/providers/` — `types.ts` (unified `ImageHit`), one adapter per provider, `index.ts` orchestrates `searchImages()` with a Pexels → Pixabay fallback cascade (Unsplash wiring commented out).
+- **Caching is the database**: every upstream `fetch` uses `next: { revalidate: 86400 }` (all providers mandate 24h caching). No DB, no storage.
+- Downloads: `app/api/download/route.ts` proxies CDN bytes (host allowlist) so the browser gets a true `Content-Disposition` attachment download. `app/api/basket-download/route.ts` streams a server-side ZIP (archiver) of multiple images.
+- Basket + search history: `localStorage` only (keys `canvas:basket`, `canvas:history`). Basket items carry an `addedAt` timestamp and auto-prune after 24h.
+- Attribution required by all providers — always rendered in the Lightbox. The lightbox/fullscreen photo viewer keeps a dark backdrop by design.
 
 ## Next.js 16 gotchas
 - Read the guides under `node_modules/next/dist/docs/` before writing Next-specific code (breaking changes vs. older Next).

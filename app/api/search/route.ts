@@ -5,7 +5,8 @@ import {
 } from "@/lib/providers";
 import type { Provider } from "@/lib/providers/types";
 
-const VALID_PROVIDERS = new Set(["auto", "pexels", "pixabay"]);
+// NOTE: Unsplash disabled — API ToS does not permit wallpaper apps.
+const VALID_PROVIDERS = new Set(["auto", "pexels", "pixabay"]); // , "unsplash"]
 const MAX_PER_PAGE = 40;
 
 export async function GET(req: NextRequest) {

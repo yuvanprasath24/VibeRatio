@@ -15,29 +15,43 @@ export interface HistoryItem {
   ts: number;
 }
 
+export interface BasketItem extends ImageHit {
+  addedAt: number;
+}
+
 interface AppStateValue {
   history: HistoryItem[];
   addHistory: (q: string) => void;
   clearHistory: () => void;
-  favorites: ImageHit[];
-  isFavorite: (hit: ImageHit) => boolean;
-  toggleFavorite: (hit: ImageHit) => void;
+  basket: BasketItem[];
+  isInBasket: (hit: ImageHit) => boolean;
+  addToBasket: (hit: ImageHit) => void;
+  removeFromBasket: (hit: ImageHit) => void;
+  basketCount: number;
 }
 
 const MAX_HISTORY = 20;
-const MAX_FAVORITES = 100;
+const MAX_BASKET = 50;
+const BASKET_TTL_MS = 24 * 60 * 60 * 1000;
 
 const AppStateContext = createContext<AppStateValue | null>(null);
+
+function pruneExpired(items: BasketItem[]): BasketItem[] {
+  const now = Date.now();
+  return items.filter((item) => now - item.addedAt < BASKET_TTL_MS);
+}
 
 export function AppStateProvider({ children }: { children: ReactNode }) {
   const [history, setHistory] = useLocalStorage<HistoryItem[]>(
     "canvas:history",
     [],
   );
-  const [favorites, setFavorites] = useLocalStorage<ImageHit[]>(
-    "canvas:favorites",
+  const [rawBasket, setRawBasket] = useLocalStorage<BasketItem[]>(
+    "canvas:basket",
     [],
   );
+
+  const basket = useMemo(() => pruneExpired(rawBasket), [rawBasket]);
 
   const addHistory = useCallback(
     (q: string) => {
@@ -55,24 +69,36 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   const clearHistory = useCallback(() => setHistory([]), [setHistory]);
 
-  const isFavorite = useCallback(
+  const isInBasket = useCallback(
     (hit: ImageHit) =>
-      favorites.some((f) => f.provider === hit.provider && f.id === hit.id),
-    [favorites],
+      basket.some((b) => b.provider === hit.provider && b.id === hit.id),
+    [basket],
   );
 
-  const toggleFavorite = useCallback(
+  const addToBasket = useCallback(
     (hit: ImageHit) => {
-      setFavorites((prev) => {
-        const exists = prev.some(
-          (f) => f.provider === hit.provider && f.id === hit.id,
+      setRawBasket((prev) => {
+        const pruned = pruneExpired(prev);
+        const exists = pruned.some(
+          (b) => b.provider === hit.provider && b.id === hit.id,
         );
-        return exists
-          ? prev.filter((f) => !(f.provider === hit.provider && f.id === hit.id))
-          : [hit, ...prev].slice(0, MAX_FAVORITES);
+        if (exists) return pruned;
+        const item: BasketItem = { ...hit, addedAt: Date.now() };
+        return [item, ...pruned].slice(0, MAX_BASKET);
       });
     },
-    [setFavorites],
+    [setRawBasket],
+  );
+
+  const removeFromBasket = useCallback(
+    (hit: ImageHit) => {
+      setRawBasket((prev) =>
+        prev.filter(
+          (b) => !(b.provider === hit.provider && b.id === hit.id),
+        ),
+      );
+    },
+    [setRawBasket],
   );
 
   const value = useMemo<AppStateValue>(
@@ -80,11 +106,13 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       history,
       addHistory,
       clearHistory,
-      favorites,
-      isFavorite,
-      toggleFavorite,
+      basket,
+      isInBasket,
+      addToBasket,
+      removeFromBasket,
+      basketCount: basket.length,
     }),
-    [history, addHistory, clearHistory, favorites, isFavorite, toggleFavorite],
+    [history, addHistory, clearHistory, basket, isInBasket, addToBasket, removeFromBasket],
   );
 
   return (

@@ -7,6 +7,10 @@ function isAllowedHost(hostname: string): boolean {
     h.endsWith(".pexels.com") ||
     h === "pixabay.com" ||
     h.endsWith(".pixabay.com")
+    // NOTE: Unsplash disabled — uncomment to allow after re-enabling.
+    // ||
+    // h === "unsplash.com" ||
+    // h.endsWith(".unsplash.com")
   );
 }
 const MAX_BYTES = 50 * 1024 * 1024;

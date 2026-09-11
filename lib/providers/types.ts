@@ -1,4 +1,4 @@
-export type Provider = "pexels" | "pixabay";
+export type Provider = "pexels" | "pixabay" | "unsplash";
 
 export interface DownloadSize {
   key: string;
@@ -43,6 +43,7 @@ export interface SearchResult {
 export const PROVIDERS: Record<Provider, { label: string; brand: string }> = {
   pexels: { label: "Pexels", brand: "Pexels" },
   pixabay: { label: "Pixabay", brand: "Pixabay" },
+  unsplash: { label: "Unsplash", brand: "Unsplash" },
 };
 
 export class ProviderError extends Error {

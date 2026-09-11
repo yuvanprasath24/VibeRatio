@@ -2,14 +2,16 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { Check, Download, Maximize2, Minimize2, ShoppingBag } from "lucide-react";
 import type { DownloadSize, ImageHit } from "@/lib/providers/types";
 import { PROVIDERS } from "@/lib/providers/types";
 
 interface LightboxProps {
   hit: ImageHit | null;
   onClose: () => void;
-  isFavorite: (hit: ImageHit) => boolean;
-  onToggleFavorite: (hit: ImageHit) => void;
+  isInBasket: (hit: ImageHit) => boolean;
+  onAddToBasket: (hit: ImageHit) => void;
+  onRemoveFromBasket: (hit: ImageHit) => void;
 }
 
 function downloadUrl(size: DownloadSize, name: string): string {
@@ -20,8 +22,9 @@ function downloadUrl(size: DownloadSize, name: string): string {
 export function Lightbox({
   hit,
   onClose,
-  isFavorite,
-  onToggleFavorite,
+  isInBasket,
+  onAddToBasket,
+  onRemoveFromBasket,
 }: LightboxProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -46,12 +49,21 @@ export function Lightbox({
 
   if (!hit) return null;
 
-  const fav = isFavorite(hit);
-  const nameSlug = (hit.alt || hit.author || "wallpaper")
+  const currentHit = hit;
+  const inBasket = isInBasket(currentHit);
+  const nameSlug = (currentHit.alt || currentHit.author || "wallpaper")
     .replace(/[^a-zA-Z0-9\s-]/g, "")
     .trim()
     .replace(/\s+/g, "-")
     .slice(0, 50);
+
+  function handleBasketToggle() {
+    if (inBasket) {
+      onRemoveFromBasket(currentHit);
+    } else {
+      onAddToBasket(currentHit);
+    }
+  }
 
   if (isFullscreen) {
     return (
@@ -65,17 +77,15 @@ export function Lightbox({
           className="object-contain"
         />
         <div className="absolute top-4 right-4 z-[101] flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setIsFullscreen(false)}
-            aria-label="Exit Fullscreen"
-            className="flex items-center gap-2 rounded-full border border-white/20 bg-black/60 backdrop-blur-md px-4 py-2 text-xs font-medium text-white hover:bg-black/80"
-          >
-            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
-            </svg>
-            Exit Fullscreen
-          </button>
+<button
+              type="button"
+              onClick={() => setIsFullscreen(false)}
+              aria-label="Exit Fullscreen"
+              className="flex items-center gap-2 rounded-full border border-white/20 bg-black/60 backdrop-blur-md px-4 py-2 text-xs font-medium text-white hover:bg-black/80"
+            >
+              <Minimize2 className="h-5 w-5" />
+              Exit Fullscreen
+            </button>
         </div>
       </div>
     );
@@ -90,10 +100,10 @@ export function Lightbox({
       aria-label="Wallpaper preview"
     >
       <div
-        className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-border-soft/80 bg-surface/95 backdrop-blur-2xl shadow-2xl shadow-black/80 md:grid md:grid-cols-[minmax(0,1fr)_340px]"
+        className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-black/10 bg-white backdrop-blur-2xl shadow-2xl shadow-black/20 md:grid md:grid-cols-[minmax(0,1fr)_340px]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="relative h-[42vh] shrink-0 bg-black/90 md:h-[78vh] group">
+        <div className="relative h-[42vh] shrink-0 bg-zinc-100 md:h-[78vh] group">
           <Image
             src={hit.preview}
             alt={hit.alt || hit.author}
@@ -105,24 +115,22 @@ export function Lightbox({
             type="button"
             onClick={() => setIsFullscreen(true)}
             aria-label="Preview Fullscreen"
-            className="absolute top-3 right-3 grid h-9 w-9 place-items-center rounded-full bg-black/60 text-white backdrop-blur-md border border-white/20 opacity-90 transition hover:bg-black/80 hover:scale-105"
+            className="absolute top-3 right-3 grid h-10 w-10 place-items-center rounded-full bg-white/80 text-zinc-800 backdrop-blur-md border border-black/10 opacity-90 transition hover:bg-white hover:scale-105"
             title="Preview Fullscreen"
           >
-            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
-            </svg>
+            <Maximize2 className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="flex min-h-0 flex-col gap-4 overflow-y-auto p-5 sm:p-6 bg-surface/40">
+        <div className="flex min-h-0 flex-col gap-4 overflow-y-auto p-5 sm:p-6 bg-zinc-50">
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="mb-1.5 flex items-center gap-2">
-                <span className="rounded-full bg-black/50 backdrop-blur-md px-2.5 py-0.5 text-[9px] font-medium uppercase tracking-widest text-white/90 border border-white/15">
+                <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-[9px] font-medium uppercase tracking-widest text-zinc-700 border border-border-soft">
                   {PROVIDERS[hit.provider].label}
                 </span>
                 <span className="text-xs text-zinc-500 font-mono">
-                  {hit.width}×{hit.height}
+                  {hit.width}x{hit.height}
                 </span>
               </div>
               <h2 className="text-base font-semibold leading-snug text-foreground">
@@ -131,21 +139,23 @@ export function Lightbox({
             </div>
             <button
               type="button"
-              onClick={() => onToggleFavorite(hit)}
-              aria-label={fav ? "Remove from favorites" : "Add to favorites"}
-              className={`grid h-9 w-9 shrink-0 place-items-center rounded-full transition duration-200 ${
-                fav
-                  ? "bg-accent text-black shadow-md shadow-accent/20"
-                  : "border border-border-soft bg-surface-2/60 text-zinc-400 hover:text-foreground hover:border-accent/40"
+              onClick={handleBasketToggle}
+              aria-label={inBasket ? "Remove from basket" : "Add to basket"}
+              className={`grid h-10 w-10 shrink-0 place-items-center rounded-full transition duration-200 ${
+                inBasket
+                  ? "bg-accent text-white shadow-md shadow-accent/20"
+                  : "border border-border-soft bg-zinc-100 text-zinc-600 hover:text-foreground hover:border-accent/40"
               }`}
             >
-              <svg viewBox="0 0 24 24" className="h-4 w-4" fill={fav ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" aria-hidden>
-                <path d="M12 21s-7.5-4.7-9.4-9.3C1 8 3.4 4.5 7 4.5c2.2 0 3.8 1.2 5 2.6 1.2-1.4 2.8-2.6 5-2.6 3.6 0 6 3.5 4.4 7.2C19.5 16.3 12 21 12 21Z" />
-              </svg>
+              {inBasket ? (
+                <Check className="h-5 w-5" />
+              ) : (
+                <ShoppingBag className="h-5 w-5" />
+              )}
             </button>
           </div>
 
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-zinc-600">
             Photo by{" "}
             {hit.authorUrl ? (
               <a
@@ -178,12 +188,10 @@ export function Lightbox({
               <a
                 key={size.key}
                 href={downloadUrl(size, nameSlug)}
-                className="flex items-center justify-between rounded-xl border border-border-soft/70 bg-surface-2/80 px-3.5 py-2.5 text-xs text-zinc-300 transition duration-200 hover:border-accent/60 hover:text-foreground hover:bg-surface-2"
+                className="flex items-center justify-between rounded-xl border border-black/10 bg-white px-3.5 py-2.5 text-xs text-zinc-700 transition duration-200 hover:border-accent/60 hover:text-foreground hover:bg-zinc-50"
               >
                 <span className="font-medium">{size.label}</span>
-                <svg viewBox="0 0 24 24" className="h-4 w-4 text-accent" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                  <path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
-                </svg>
+                <Download className="h-5 w-5 text-accent" />
               </a>
             ))}
           </div>
@@ -192,7 +200,7 @@ export function Lightbox({
             href={hit.pageUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-auto pt-3 text-xs text-zinc-500 underline hover:text-zinc-300"
+            className="mt-auto pt-3 text-xs text-zinc-500 underline hover:text-zinc-700"
           >
             View original photo page on {PROVIDERS[hit.provider].label}
           </a>

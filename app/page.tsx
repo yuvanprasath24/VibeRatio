@@ -30,7 +30,7 @@ function AmbientCursorGlow() {
 
   return (
     <div
-      className="pointer-events-none fixed z-0 h-96 w-96 rounded-full bg-gradient-to-r from-emerald-500/20 via-cyan-500/15 to-blue-500/10 blur-3xl transition-transform duration-75 ease-out"
+      className="pointer-events-none fixed z-0 h-96 w-96 rounded-full bg-gradient-to-r from-emerald-400/25 via-cyan-400/15 to-blue-400/10 blur-3xl transition-transform duration-75 ease-out"
       style={{
         transform: `translate3d(${pos.x - 192}px, ${pos.y - 192}px, 0)`,
       }}
@@ -39,7 +39,7 @@ function AmbientCursorGlow() {
 }
 
 export default function HomePage() {
-  const { addHistory, isFavorite, toggleFavorite } = useAppState();
+  const { addHistory, isInBasket, addToBasket, removeFromBasket } = useAppState();
   const [turns, setTurns] = useState<TurnRecord[]>([]);
   const [picked, setPicked] = useState<ImageHit | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -231,17 +231,24 @@ export default function HomePage() {
   }, [turns.length]);
 
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col bg-black overflow-hidden">
+    <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
       <AmbientCursorGlow />
       <MobileHeader />
 
       {turns.length === 0 ? (
         <div className="relative z-10 flex flex-1 flex-col items-center px-4 sm:px-6 py-12 md:py-16">
-          <div className="text-center max-w-xl pt-10 sm:pt-16 md:pt-20">
-            <h1 className="text-3xl font-extrabold tracking-wider text-white uppercase sm:text-4xl md:text-5xl font-mono">
+          <div className="text-center max-w-2xl pt-10 sm:pt-16 md:pt-20">
+            <div className="mx-auto mb-6 grid h-20 w-20 place-items-center rounded-3xl bg-gradient-to-br from-accent/20 via-accent-cyan/10 to-transparent border border-accent/20 shadow-2xl shadow-accent/10">
+              <svg viewBox="0 0 24 24" className="h-9 w-9 text-accent" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+                <rect x="3" y="3" width="18" height="18" rx="3" />
+                <circle cx="9" cy="9" r="2" />
+                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+              </svg>
+            </div>
+            <h1 className="text-3xl font-extrabold tracking-wider uppercase sm:text-4xl md:text-5xl font-mono bg-gradient-to-b from-zinc-900 via-zinc-600 to-zinc-400 bg-clip-text text-transparent">
               CHOOSE YOUR WALLPAPER
             </h1>
-            <p className="mt-3 text-base text-zinc-400 font-mono tracking-wide">
+            <p className="mt-3 text-base text-zinc-600 font-mono tracking-wide">
               In less than Second !!
             </p>
           </div>
@@ -262,20 +269,21 @@ export default function HomePage() {
                   onRetry={retry}
                   onLoadMore={loadMore}
                   onPick={setPicked}
-                  isFavorite={isFavorite}
-                  onToggleFavorite={toggleFavorite}
+                  isInBasket={isInBasket}
+                  onAddToBasket={addToBasket}
+                  onRemoveFromBasket={removeFromBasket}
                 />
               ))}
               {turns[turns.length - 1].status !== "loading" &&
                 turns.some((t) => t.status === "loading") && (
-                  <p className="text-xs text-zinc-500 font-mono">
+                  <p className="text-xs text-zinc-600 font-mono">
                     Fetching wallpapers…
                   </p>
                 )}
             </div>
             <div ref={bottomRef} className="h-4" />
           </div>
-          <div className="relative z-10 border-t border-border-soft/60 bg-black/90 px-4 py-4 backdrop-blur-lg sm:px-6">
+          <div className="relative z-10 border-t border-border-soft/60 bg-gradient-to-t from-background via-background/95 to-background/85 px-4 py-4 backdrop-blur-lg sm:px-6">
             <Composer onSubmit={submit} disabled={busy} />
           </div>
         </>
@@ -284,8 +292,9 @@ export default function HomePage() {
       <Lightbox
         hit={picked}
         onClose={() => setPicked(null)}
-        isFavorite={isFavorite}
-        onToggleFavorite={toggleFavorite}
+        isInBasket={isInBasket}
+        onAddToBasket={addToBasket}
+        onRemoveFromBasket={removeFromBasket}
       />
     </div>
   );
